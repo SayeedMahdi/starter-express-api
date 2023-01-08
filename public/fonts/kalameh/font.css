@@ -1,0 +1,21 @@
+@font-face {
+    font-family: Kalameh;
+    src: url('Farsi_Numerals/TTF/Kalameh(FaNum)-Regular.ttf');
+    src: url('Farsi_Numerals/TTF/Kalameh(FaNum)-Regular.ttf') format('truetype'),
+    url('Farsi_Numerals/WebFonts/_Woff2/KalamehWeb(FaNum)-Regular.woff2') format('woff2'),
+    url('Farsi_Numerals/WebFonts/_Woff/KalamehWeb(FaNum)-Regular.woff') format('woff'),
+    url('Farsi_Numerals/WebFonts/_eot/KalamehWeb(FaNum)-Regular.eot?#iefix') format('embedded-opentype');
+    font-weight: normal;
+    font-style: auto;
+}
+
+@font-face {
+    font-family: Kalameh;
+    src: url('Farsi_Numerals/TTF/Kalameh(FaNum)-Bold.ttf');
+    src: url('Farsi_Numerals/TTF/Kalameh(FaNum)-Bold.ttf') format('truetype'),
+    url('Farsi_Numerals/WebFonts/_Woff2/KalamehWeb(FaNum)-Bold.woff2') format('woff2'),
+    url('Farsi_Numerals/WebFonts/_Woff/KalamehWeb(FaNum)-Bold.woff') format('woff'),
+    url('Farsi_Numerals/WebFonts/_eot/KalamehWeb(FaNum)-Bold.eot?#iefix') format('embedded-opentype');
+    font-weight: bold;
+    font-style: normal;
+}

@@ -1,22 +1,72 @@
 {
-  "name": "starter-express-api",
+  "name": "raha-app",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Authentication system for admin panel",
+  "main": "server.js",
+  "type": "module",
+  "engines": {
+    "node": "16.16.0",
+    "npm": "8.3.x"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "server": "nodemon run lint",
+    "dev": "concurrently  \"npm run server\" \"npm run client\" ",
+    "data:import": "node seeder",
+    "data:destroy": "node seeder -d"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/cyclic-software/starter-express-api.git"
+    "url": "git+https://github.com/rahanet-ict/raha-app.git"
   },
-  "author": "",
+  "author": "Manzoor Ahmad Wayar & Mohsen Amani",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/cyclic-software/starter-express-api/issues"
+    "url": "https://github.com/rahanet-ict/raha-app/issues"
   },
-  "homepage": "https://github.com/cyclic-software/starter-express-api#readme",
+  "homepage": "https://github.com/rahanet-ict/raha-app#readme",
   "dependencies": {
-    "express": "^4.17.1"
+    "@casl/ability": "^5.4.3",
+    "@casl/mongoose": "^6.0.0",
+    "axios": "^0.26.1",
+    "bcryptjs": "^2.4.3",
+    "cloudinary": "^1.32.0",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "crypto": "^1.0.1",
+    "dotenv": "^16.0.0",
+    "draftjs-to-html": "^0.9.1",
+    "express": "^4.17.3",
+    "express-async-handler": "^1.2.0",
+    "express-group-router": "^2.1.0",
+    "express-mongo-sanitize": "^2.2.0",
+    "express-rate-limit": "^6.3.0",
+    "express-validator": "^6.14.0",
+    "helmet": "^5.1.0",
+    "i": "^0.3.7",
+    "i18next": "^21.7.1",
+    "i18next-fs-backend": "^1.1.4",
+    "i18next-http-middleware": "^3.2.0",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^6.2.4",
+    "mongoose-delete": "^0.5.4",
+    "mongoose-slug-generator": "^1.0.4",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.7.2",
+    "npm": "^9.2.0",
+    "openai": "^3.1.0",
+    "proxy-addr": "^2.0.7",
+    "sharp": "^0.30.4",
+    "slugify": "^1.6.5",
+    "socket.io": "^4.5.1",
+    "speakeasy": "^2.0.0",
+    "twilio": "^3.84.0",
+    "xss-clean": "^0.1.1"
+  },
+  "devDependencies": {
+    "colors": "^1.4.0",
+    "concurrently": "^7.0.0",
+    "eslint-config-google": "^0.14.0",
+    "nodemon": "^2.0.15"
   }
 }
