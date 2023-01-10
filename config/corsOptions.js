@@ -1,4 +1,4 @@
-const allowedOrigins = ["http://localhost:3000", "https://rahanet.netlify.app"]
+const allowedOrigins = ["http://localhost:3000", "https://rahanet.netlify.app","https://luminous-haupia-403fe1.netlify.app"]
 
 const corsOptions = {
 	origin: (origin, callback) => {
