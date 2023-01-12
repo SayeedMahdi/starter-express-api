@@ -95,8 +95,7 @@ router.group("/client/profile", [authenticate(Client)], (router) => {
 })
 
 // Blog Routes
-router.group("/blogs", (router) => {
-	console.log("lkj")
+router.group("blogs", (router) => {
 	router.get("/", BlogController.getBlogs)
 	router.get("/:id", BlogController.getBlog)
 

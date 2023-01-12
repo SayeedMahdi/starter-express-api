@@ -7,9 +7,12 @@ import mongoose from "mongoose"
 // @access    public
 const getBlogs = asyncHandler(async (req, res, next) => {
 	const blogs = await Blog.find()
+		.populate("author", "fullName image")
+		.populate("comments.author", "fullName image publicId")
 
 	res.json(blogs)
 })
+
 // @desc      Get single blog by id
 // @route     GET /api/v1/blog/:id
 // @access    public
