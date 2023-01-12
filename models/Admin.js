@@ -2,9 +2,8 @@ import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import { accessibleRecordsPlugin } from "@casl/mongoose";
 import defineRole from "../config/roles/defineRole.js";
-import softDelete from 'mongoose-delete'
+import speakeasy from "speakeasy";
 
 const AdminSchema = new mongoose.Schema(
   {
@@ -30,28 +29,35 @@ const AdminSchema = new mongoose.Schema(
       },
       required: [true, "username is required"],
     },
+    update_secret: {
+      type: Object,
+      select: false,
+      default: speakeasy.generateSecret({ length: 32 })
+    },
     password: {
       type: String,
       required: [true, "Password is required"],
       minlength: 6,
       select: false,
     },
+    auth_secret: {
+      type: Object,
+      select: false,
+      default: speakeasy.generateSecret({ length: 32 })
+    },
     image: {
       type: String,
-      default: null,
+      required: true
+    },
+    publicId: {
+      type: String,
+      required: true
     },
     gender: {
       type: String,
       enum: ["male", "female"],
       default: "male",
       required: [true, "Gender is required"],
-    },
-    role: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Role"
-    },
-    publicId: {
-      type: String
     },
     isSuperAdmin: {
       type: Boolean,
@@ -69,16 +75,7 @@ const AdminSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Admin",
     },
-    rememberToken: String,
-    resetPasswordToken: String,
-    resetPasswordExpire: Date,
-    lastLogin: Date,
-    tokenIdentifier: String,
-    theme: {
-      type: String,
-      enum: ["dark", "light"],
-      default: "dark",
-    }
+    resetPasswordToken: String
   },
   {
     timestamps: true,
@@ -101,20 +98,24 @@ AdminSchema.methods.matchPassword = async function (enteredPassword) {
 };
 
 // Sign JWT and return
-AdminSchema.methods.getSignedJwtToken = function () {
-  this.tokenIdentifier = crypto.randomUUID();
-  this.lastLogin = new Date();
-  this.save();
-  return {
-    accessToken: jwt.sign({ id: this._id, tokenIdentifier: this.tokenIdentifier }, process.env.JWT_SECRET, {
-      expiresIn: process.env.JWT_EXPIRE,
-    }),
-    refreshToken: jwt.sign(
-      { id: this._id, tokenIdentifier: this.tokenIdentifier },
-      process.env.JWT_REFRESH_SECRET.concat(this.password),
-      { expiresIn: process.env.JWT_REFRESH_EXPIRE }
-    ),
-  };
+AdminSchema.methods.generateAccessToken = async function () {
+  let payload = { id: this._id }
+
+  return jwt.sign(
+    payload,
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRE }
+  )
+};
+
+AdminSchema.methods.generateRefreshToken = async function () {
+  let payload = { id: this._id }
+
+  return jwt.sign(
+    payload,
+    process.env.JWT_ADMIN_REFRESH_SECRET,
+    { expiresIn: process.env.JWT_REFRESH_EXPIRE }
+  )
 };
 
 // Verify JWT token
@@ -147,12 +148,6 @@ AdminSchema.methods.getRoleAbilities = function () {
   else return [];
 };
 
-AdminSchema.plugin(accessibleRecordsPlugin);
-AdminSchema.plugin(softDelete, {
-  deletedBy: true,
-  deletedAt: true,
-  overrideMethods: true,
-});
 
 const Admin = mongoose.model("Admin", AdminSchema);
 

@@ -4,35 +4,13 @@ import i18next from 'i18next'
 import * as fs from "fs";
 
 const MediaSchema = new mongoose.Schema({
-    name: {
-        type: String,
-        required: true
-    },
-    mimeType: {
-        type: String,
-        enum: ["jpg", "jpeg", "png"],
-        required: true
-    },
-    size: {
-        type: Number,
-        required: true
-    },
-    width: {
-        type: Number,
-        required: true
-    },
-    height: {
-        type: Number,
-        required: true
-    },
     path: {
         type: String,
         required: true
     },
-    sizes: {
-        thumbnail: String,
-        medium: String,
-        large: String,
+    publicId: {
+        type: String,
+        required: true
     },
     creatorId: {
         type: mongoose.Schema.Types.ObjectId,

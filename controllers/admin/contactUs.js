@@ -8,20 +8,9 @@ const ContactUsController = {
   // @access    public
   getContacts: asyncHandler(async (req, res, next) => {
 
-    req.database = {
-      model: ContactUs,
-      search: {},
-    };
+    const contacts = await ContactUs.find()
 
-    if (req.query.hasOwnProperty("q") && req.query.q.length > 0) {
-      req.database.search = {
-        $or: [
-          { name: { $regex: req.query["q"], $options: "i" } },
-          { email: { $regex: req.query["q"], $options: "i" } },
-        ],
-      };
-    }
-    next();
+    res.json(contacts);
   }),
 
   // @desc      Change contact form status
@@ -30,18 +19,20 @@ const ContactUsController = {
   changeStatus: asyncHandler(async ({ params: { id }, body, t }, res, next) => {
     if (!mongoose.Types.ObjectId.isValid(id)) return next();
 
-    if(!await ContactUs.findOne({ _id: id })) {
+    let contact = await ContactUs.findOne({ _id: id })
+
+    if (!contact) {
       res.status(404);
-      return next(new Error(t("not-found", { ns: 'validations', key: t("contact") })));
+      throw new Error(t("not-found", { ns: 'validations', key: t("contact") }));
     }
 
-    const contact = await ContactUs.findOneAndUpdate({ _id: id }, {
+    contact = await ContactUs.findOneAndUpdate({ _id: id }, {
       status: body.status
-      },
-    {
-      new: true,
-      runValidators: true
-    });
+    },
+      {
+        new: true,
+        runValidators: true
+      });
 
     res.json(contact);
   }),

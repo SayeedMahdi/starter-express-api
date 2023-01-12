@@ -5,6 +5,8 @@ import sendMail from "../../utils/sendMail.js";
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import ResetPasswordTemplate from "../../views/reset-password.js"
+import { log } from "console";
+import speakeasy from "speakeasy";
 
 // @desc    Auth admin & get token
 // @route   POST /api/v1/admin/auth/login
@@ -16,7 +18,6 @@ const login = asyncHandler(async (req, res, next) => {
   const admin = await Admin.findOne({
     $or: [{ email: emailUsername }, { username: emailUsername }],
   })
-    .populate('role', 'name')
     .select("+password");
 
   if (!admin) {
@@ -38,141 +39,146 @@ const login = asyncHandler(async (req, res, next) => {
     return next(new Error(req.t("invalid", { ns: 'validations', key: req.t("credentials") })));
   }
 
-  admin.ability = admin.getRoleAbilities();
+  const accessToken = await admin.generateAccessToken();
+  const refreshToken = await admin.generateRefreshToken();
 
-  req.user = admin;
+  const options = {
+    httpOnly: true, //accessible only by web server 
+    secure: process.env.NODE_ENV === "production", //https 
+    SameSite: 'Lax', //cross-site cookie  
+    maxAge: 7 * 24 * 60 * 60 * 1000 //cookie expiry: set to match rT
+  };
 
-  return res.json(getTokenResponse(req.user));
+  res.status(200)
+    .cookie("admin_token", refreshToken, options)
+    .json({
+      id: admin._id,
+      fullName: admin.fullName,
+      username: admin.username,
+      email: admin.email,
+      image: admin.puplicId,
+      gender: admin.gender,
+      superAdmin: admin.isSuperAdmin,
+      isActive: admin.isActive,
+      accessToken
+    });
 });
 
 // @desc      Log admin out / clear cookie
 // @route     GET /api/v1/admin/logout
 // @access    Private
-const logout = asyncHandler(async (req, res) => {
-  req.user.tokenIdentifier = null;
-  await req.user.save();
-  res.json({});
-});
+const logout = (req, res) => {
+  const cookies = req.cookies
+  if (!cookies?.admin_token) return res.sendStatus(204) //No content
+
+  res.clearCookie('admin_token', {
+    httpOnly: true, //accessible only by web server 
+    secure: process.env.NODE_ENV === "production", //https 
+    SameSite: 'Lax', //cross-site cookie  
+  })
+
+  res.json({ message: 'Cookie cleared' })
+}
 
 // @desc      Forgot password
 // @route     POST /api/v1/admin/forgotpassword
 // @access    Public
 const forgotPassword = asyncHandler(async (req, res) => {
-  const admin = await Admin.findOne({ email: req.body.email });
+  const user = await Admin.findOne({ email: req.body.email }).select("+update_secret").exec();
 
-  if (!admin) {
-    res.status(400);
+  if (!user) {
+    res.statusCode = 400;
     throw new Error(req.t("not-found", { ns: 'validations', key: req.t("user") }));
   }
 
-  const resetToken = admin.getResetPasswordToken();
-  await admin.save({ validateBeforeSave: false });
+  const token = speakeasy.totp({
+    secret: user.update_secret.base32,
+    algorithm: 'sha512',
+    encoding: 'base32',
+    step: process.env.OTP_STEP_EMAIL || 120
+  });
 
+  user.resetPasswordToken = token;
+  await user.save();
   // Create reset url
-  const resetUrl = `${process.env.FRONT_BASEURL}/reset-password/${resetToken}`;
   const ipAddress = req.socket.remoteAddress;
-  const recipient = { name: admin.fullName, email: admin.email };
+  const recipient = { name: user.fullName, email: user.email };
 
-  const template = new ResetPasswordTemplate(resetUrl, recipient, ipAddress, process.env.FRONT_BASEURL)
-  try {
-    await sendMail({
-      to: admin.email,
-      subject: req.t("reset-password"),
-      html: template.render(),
-    });
+  const template = new ResetPasswordTemplate(token, recipient, ipAddress)
 
-    return res.json({ message: "Email sent" });
-  } catch (err) {
-    admin.resetPasswordToken = undefined;
-    admin.resetPasswordExpire = undefined;
+  await sendMail({
+    to: user.email,
+    subject: `${req.t("reset-password")} - ${token}`,
+    html: template.render(),
+  });
 
-    await admin.save({ validateBeforeSave: false });
-
-    res.status(400);
-    throw new Error(err);
-  }
-});
+  return res.json({ success: true, email: user.email });
+})
 
 // @desc      Reset password
 // @route     PUT /api/v1/admin/reset-password/:token
 // @access    Public
 const resetPassword = asyncHandler(async (req, res) => {
-  const { newPassword, confirmPassword } = req.body;
-  // Get hashed token
-  const resetPasswordToken = crypto
-    .createHash("sha256")
-    .update(req.params.token)
-    .digest("hex");
+  const { otpCode, newPassword, email } = req.body;
 
-  const admin = await Admin.findOne({
-    resetPasswordToken,
-    resetPasswordExpire: { $gt: Date.now() },
+  const user = await Admin.findOne({ email: email, resetPasswordToken: otpCode }).select("+update_secret").exec();
+
+  const verify = speakeasy.totp.verify({
+    secret: user?.update_secret?.base32,
+    algorithm: 'sha512',
+    encoding: 'base32',
+    token: otpCode,
+    step: process.env.OTP_STEP_EMAIL || 120,
+    window: 1,
   });
 
-  if (!admin) {
-    res.status(400);
+  if (!user || !verify) {
+    res.statusCode = 400;
     throw new Error(req.t("invalid", { ns: 'validations', key: req.t("token") }));
   }
 
-  if (newPassword !== confirmPassword) {
-    res.status(400);
-    throw new Error(req.t("confirm-password", { ns: 'validations' }));
+  user.password = newPassword;
+  user.resetPasswordToken = undefined;
 
-  } else {
-    // Set new password
-    admin.password = newPassword;
-    admin.resetPasswordToken = undefined;
-    admin.resetPasswordExpire = undefined;
-    await admin.save();
-  }
+  await user.save();
 
-  return res.send();
-});
+  return res.json({ success: true });
+})
 
-const refreshToken = asyncHandler(async (req, res) => {
-  const { refreshToken } = req.body;
 
-  if (!refreshToken) {
-    res.status(400);
-    throw new Error(req.t("invalid", { ns: 'validations', key: req.t("data") }));
-  }
+const refreshToken = (req, res) => {
+  const cookies = req.cookies
 
-  const { id, tokenIdentifier } = jwt.decode(refreshToken);
+  if (!cookies?.admin_token) return res.status(401).json({ message: 'no cookie Unauthorized' })
 
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    res.status(401);
-    throw new Error(req.t("invalid", { ns: 'validations', key: "data" }));
-  }
+  const refreshToken = cookies.admin_token
 
-  const user = await Admin.findById(id).select("+password").populate('role', 'name');
-
-  if (user.tokenIdentifier === tokenIdentifier && user.verifyToken(refreshToken, "refresh"))
-    return res.json(getTokenResponse(user));
-
-  res.status(401);
-  throw new Error(req.t("invalid", { ns: 'validations', key: "data" }));
-});
-
-// Get token from model
-const getTokenResponse = (user) => {
-  const { accessToken, refreshToken } = user.getSignedJwtToken();
-  return {
-    userData: {
-      _id: user._id,
-      fullName: user.fullName,
-      email: user.email,
-      admin: user.role,
-      image: user.image,
-      gender: user.gender,
-      superAdmin: user.isSuperAdmin,
-      role: user.role?.name,
-      ability: user.ability,
-      theme: user.theme,
-      publicId: user.publicId
-    },
-    accessToken,
+  jwt.verify(
     refreshToken,
-  };
-};
+    process.env.JWT_ADMIN_REFRESH_SECRET,
+    async (err, decoded) => {
+      if (err) return res.status(403).json({ message: 'Forbidden' })
+
+      const foundUser = await Admin.findOne({ id: decoded.id }).exec()
+
+      if (!foundUser) return res.status(401).json({ message: 'Unauthorized' })
+
+      const accessToken = await foundUser.generateAccessToken();
+
+      res.json({
+        id: foundUser._id,
+        fullName: foundUser.fullName,
+        username: foundUser.username,
+        email: foundUser.email,
+        image: foundUser.puplicId,
+        gender: foundUser.gender,
+        superAdmin: foundUser.isSuperAdmin,
+        isActive: foundUser.isActive,
+        accessToken
+      });
+    }
+  )
+}
+
 
 export default { login, forgotPassword, resetPassword, refreshToken, logout };

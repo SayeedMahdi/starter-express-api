@@ -11,7 +11,10 @@ import jwt from "jsonwebtoken";
 const register = asyncHandler(async (req, res) => {
   const { fullName, email, password } = req.body;
 
-  const user = await Client.create({ fullName, email, password });
+  const image = req.body.cloudinary?.url
+  const publicId = req.body.cloudinary?.public_id
+
+  const user = await Client.create({ fullName, email, password, image, publicId });
 
   if (!user) {
     res.status(500);
@@ -59,6 +62,8 @@ const login = asyncHandler(async (req, res) => {
       fullName: user["fullName"] || null,
       email: user["email"] || null,
       verifiedAt: user["verifiedAt"] || null,
+      image: user["image"] || null,
+      publicId: user["publicId"] || null,
       accessToken
     });
 })
@@ -90,6 +95,8 @@ const refresh = (req, res) => {
         fullName: foundUser["fullName"] || null,
         email: foundUser["email"] || null,
         verifiedAt: foundUser["verifiedAt"] || null,
+        image: foundUser["image"] || null,
+        publicId: foundUser["publicId"] || null,
         accessToken
       });
     }
@@ -153,6 +160,8 @@ const verifyEmail = asyncHandler(async (req, res) => {
     fullName: user["fullName"] || null,
     email: user["email"] || null,
     verifiedAt: user["verifiedAt"] || null,
+    image: user["image"] || null,
+    publicId: user["publicId"] || null,
     accessToken
   });
 })

@@ -39,7 +39,7 @@ const MediaController = {
   // @route   POST /api/v1/admin/media
   // @access  private
   createMedia: asyncHandler(async ({ user, body, t }, res) => {
-    console.log(body, body.images);
+    console.log(body, body.images, user);
     const sizes = {};
     const originalName = {};
 

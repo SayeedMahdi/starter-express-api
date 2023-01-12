@@ -5,18 +5,15 @@ import Category from "../../models/Category.js";
 
 const FAQController = {
     getFAQs: asyncHandler(async (req, res, next) => {
-        req.database = {
-            model: FAQ,
-            search: {},
-            populate: [{ path: "category", select: "name" },]
-        }
-        next();
+        const fags = await FAQ.find()
+
+        res.json(fags);
     }),
 
     // @desc    Get a Service
     // @route   GET /api/v1/admin/faq/:id
     // @access  Private
-     getFaq: asyncHandler(async ({ params: { id }, t }, res, next) => {
+    getFaq: asyncHandler(async ({ params: { id }, t }, res, next) => {
         if (!mongoose.Types.ObjectId.isValid(id)) return next();
 
         const faq = await FAQ.findOne({ _id: id }).populate('category', 'name')
@@ -32,8 +29,7 @@ const FAQController = {
     // @desc    Create Frequetly Asks Questions
     // @route   POST /api/v1/admin/FAQ
     // @access  private
-     createFAQ: asyncHandler(async ({ body, user }, res) => {
-
+    createFAQ: asyncHandler(async ({ body, user }, res) => {
         body.creatorId = user.id;
 
         body.question = {
@@ -44,9 +40,7 @@ const FAQController = {
             fa: body.answer
         }
 
-        let faq = await FAQ.create(body);
-
-        faq = await faq.populate('category', 'name')
+        const faq = await FAQ.create(body);
 
         res.status(201).json(faq)
     }),
@@ -54,7 +48,7 @@ const FAQController = {
     // @desc    Create Frequetly Asks Questions
     // @route   PUT /api/v1/admin/FAQ/:id
     // @access  private
-     updateFAQ: asyncHandler(async ({ body, user, params: { id }, t }, res, next) => {
+    updateFAQ: asyncHandler(async ({ body, user, params: { id }, t }, res, next) => {
         if (!mongoose.Types.ObjectId.isValid(id)) return next();
 
         body.creatorId = user.id;
@@ -73,7 +67,7 @@ const FAQController = {
                 answer: body.answer,
                 category: body.category
             }
-        }, { new: true }).populate('category', 'name');
+        }, { new: true })
 
         if (!faq) {
             res.status(404);
@@ -86,7 +80,7 @@ const FAQController = {
     // @desc    Get Frequetly Ask Questions
     // @route   GET /api/v1/admin/FAQ/:id
     // @access  private
-     deleteFAQ: asyncHandler(async ({ params: { id }, t }, res, next) => {
+    deleteFAQ: asyncHandler(async ({ params: { id }, t }, res, next) => {
         if (!mongoose.isValidObjectId(id)) return next();
 
         const findAnFAQ = await FAQ.findByIdAndDelete(id);
@@ -103,12 +97,11 @@ const FAQController = {
     // @desc      Update Faq locals
     // @route     PUT api/v1/admin/faq/:id/update-locals
     // @access    private/admin
-     updateLocals: asyncHandler(async ({ body, params: { id }, t }, res, next) => {
+    updateLocals: asyncHandler(async ({ body, params: { id }, t }, res, next) => {
         if (!mongoose.Types.ObjectId.isValid(id)) return next();
 
         const faq = await FAQ.findByIdAndUpdate({ _id: id }, {
             $set: {
-                "question.fa": body["question-fa"], "question.ps": body["question-ps"],
                 "question.en": body["question-en"], "answer.fa": body["answer-fa"],
                 "answer.ps": body["answer-ps"], "answer.en": body["answer-en"],
             },

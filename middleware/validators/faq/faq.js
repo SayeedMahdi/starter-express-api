@@ -36,16 +36,7 @@ const createSchema = checkSchema({
             errorMessage: (_, { req }) =>
                 req.t("required", { ns: "validations", key: req.t("answer") })
         }
-    },
-    category: {
-        escape: true,
-        trim: true,
-        isEmpty: {
-            negated: true,
-            errorMessage: (_, { req }) =>
-                req.t("required", { ns: "validations", key: req.t("category") })
-        }
-    },
+    }
 });
 
 const updateSchema = checkSchema({
@@ -74,37 +65,11 @@ const updateSchema = checkSchema({
             errorMessage: (_, { req }) =>
                 req.t("required", { ns: "validations", key: req.t("question") })
         }
-    },
-    category: {
-        escape: true,
-        trim: true,
-        isEmpty: {
-            negated: true,
-            errorMessage: (_, { req }) =>
-                req.t("required", { ns: "validations", key: req.t("category") })
-        }
-    },
+    }
 });
 
 
 const updateLocalSchema = checkSchema({
-    "question-fa": {
-        escape: true,
-        trim: true,
-        isEmpty: {
-            negated: true,
-            errorMessage: (_, { req }) =>
-                req.t("required", { ns: "validations", key: req.t("question") })
-        },
-        custom: {
-            options: async (question, { req: { params: { id } } }) => {
-                const result = await FAQ.findOne({ question, _id: { $ne: id } });
-                return result ? Promise.reject() : Promise.resolve();
-            },
-            errorMessage: (_, { req }) =>
-                req.t("already-exists", { ns: "validations", key: req.t("question") })
-        }
-    },
     "question-en": {
         escape: true,
         trim: true,
@@ -121,15 +86,6 @@ const updateLocalSchema = checkSchema({
             negated: true,
             errorMessage: (_, { req }) =>
                 req.t("required", { ns: "validations", key: req.t("question"), local: req.t("pashto") })
-        }
-    },
-    "answer-fa": {
-        escape: true,
-        trim: true,
-        isEmpty: {
-            negated: true,
-            errorMessage: (_, { req }) =>
-                req.t("required", { ns: "validations", key: req.t("answer"), local: req.t("persian") })
         }
     },
     "answer-en": {
