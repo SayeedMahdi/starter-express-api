@@ -44,9 +44,8 @@ const router = new Router()
 // Auth Routes
 router.group("/auth", [limiter], (router) => {
 	router.post("/login", authValidation.login, authController.login)
-	router.post(
+	router.get(
 		"/refresh",
-		authValidation.refreshToken,
 		authController.refreshToken
 	)
 	router.post(

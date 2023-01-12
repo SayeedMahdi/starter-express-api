@@ -6,30 +6,9 @@ import mongoose from "mongoose"
 // @route     GET /api/v1/blogs/
 // @access    public
 const getBlogs = asyncHandler(async (req, res, next) => {
-	req.database = {
-		model: Blog,
-		search: {},
-		populate: [
-			{ path: "author", select: "fullName image" },
-			{ path: "comments.author", select: "fullName image publicId" },
-			{ path: "image", select: "path publicId" },
-		],
-	}
+	const blogs = await Blog.find()
 
-	req.query.sortColumn = req.query.sortColumn || "publishedAt"
-
-	if (req.query.hasOwnProperty("q") && req.query.q.length > 0) {
-		req.database.search["$text"] = { $search: `/${req.query["q"]}/i` }
-	}
-
-	if (req.query?.filter?.length > 0 && req.query?.date?.length > 0) {
-		req.database.search["publishedAt"] =
-			req.query.filter === "_new"
-				? { $gt: req.query.date }
-				: { $lt: req.query.date }
-	}
-
-	next()
+	res.json(blogs)
 })
 // @desc      Get single blog by id
 // @route     GET /api/v1/blog/:id

@@ -136,21 +136,6 @@ const updateBlogSchema = checkSchema({
 	// },
 })
 
-const restoreBlogSchema = checkSchema({
-	id: {
-		escape: true,
-		trim: true,
-		isEmpty: {
-			negated: true,
-			errorMessage: (_, { req }) =>
-				req.t("required", {
-					ns: "validations",
-					key: req.t("item-id", { key: "Blog" }),
-				}),
-		},
-	},
-})
-
 const errorHandler = (req, res, next) => {
 	// handling validation errors
 	const validationErrs = validationResult(req)
@@ -166,6 +151,5 @@ const errorHandler = (req, res, next) => {
 
 export default {
 	create: [createBlogSchema, errorHandler],
-	update: [updateBlogSchema, errorHandler],
-	restore: [restoreBlogSchema, errorHandler],
+	update: [updateBlogSchema, errorHandler]
 }

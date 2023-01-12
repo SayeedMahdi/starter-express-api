@@ -85,7 +85,7 @@ const resetPasswordSchema = checkSchema({
       errorMessage: (_, { req }) => req.t("required", { ns: 'validations', key: req.t('confirm-password') })
     },
     custom: {
-      options: (value, {req}) => {
+      options: (value, { req }) => {
         if (value === req.body.newPassword) {
           return Promise.resolve()
         }
@@ -95,21 +95,8 @@ const resetPasswordSchema = checkSchema({
   },
 });
 
-
-const tokenSchema = checkSchema({
-  escape: true,
-  trim: true,
-  refreshToken: {
-    isEmpty: {
-      negated: true,
-      errorMessage: (_, { req }) => req.t("required", { ns: 'validations', key: "Refresh Token" }),
-    }
-  }
-});
-
 export default {
   login: [loginSchema, errorHandler],
   forgotPassword: [forgotPasswordSchema, errorHandler],
-  resetPassword: [resetPasswordSchema, errorHandler],
-  refreshToken: [tokenSchema, errorHandler]
+  resetPassword: [resetPasswordSchema, errorHandler]
 };
