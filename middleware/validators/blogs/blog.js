@@ -45,6 +45,15 @@ const createBlogSchema = checkSchema({
 	//     }
 	//   }
 	// },
+	image: {
+		escape: true,
+		trim: true,
+		isEmpty: {
+			negated: true,
+			errorMessage: (_, { req }) =>
+				req.t("required", { ns: "validations", key: req.t("image") }),
+		},
+	},
 	excerpt: {
 		escape: true,
 		trim: true,
@@ -151,5 +160,5 @@ const errorHandler = (req, res, next) => {
 
 export default {
 	create: [createBlogSchema, errorHandler],
-	update: [updateBlogSchema, errorHandler]
+	update: [updateBlogSchema, errorHandler],
 }

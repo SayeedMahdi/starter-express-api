@@ -9,7 +9,7 @@ import categoryController from "../controllers/admin/category.js"
 import serviceController from "../controllers/admin/service.js"
 import FAQController from "../controllers/admin/faq.js"
 import ContactUsController from "../controllers/admin/contactUs.js"
-import RoleController from "../controllers/admin/role.js"
+// import RoleController from "../controllers/admin/role.js"
 import MediaController from "../controllers/admin/media.js"
 import TicketController from "../controllers/admin/ticket.js"
 import JobRequestController from "../controllers/admin/jobRequest.js"
@@ -32,22 +32,20 @@ import packageValidation from "../middleware/validators/packages/package.js"
 import serviceValidation from "../middleware/validators/services/service.js"
 import FAQValidation from "../middleware/validators/faq/faq.js"
 import contactUsValidation from "../middleware/validators/support/contactUs.js"
-import roleValidation from "../middleware/validators/roles/role.js"
+// import roleValidation from "../middleware/validators/roles/role.js"
 import mediaValidation from "../middleware/validators/media/media.js"
 import ticketValidation from "../middleware/validators/ticket/ticket.js"
 import jobRequestValidation from "../middleware/validators/requests/jobRequest.js"
 import serviceRequestValidation from "../middleware/validators/requests/serviceRequest.js"
 import uploadToCloudinary from "../utils/uploadCloudinary.js"
+import authChecker from "../middleware/authorization.js"
 
 const router = new Router()
 
 // Auth Routes
 router.group("/auth", [limiter], (router) => {
 	router.post("/login", authValidation.login, authController.login)
-	router.get(
-		"/refresh",
-		authController.refreshToken
-	)
+	router.get("/refresh", authController.refreshToken)
 	router.post(
 		"/forgot-password",
 		authValidation.forgotPassword,
@@ -61,10 +59,10 @@ router.group("/auth", [limiter], (router) => {
 	router.post("/logout", authenticate(Admin), authController.logout)
 })
 
-router.group([authenticate(Admin), authorize], (router) => {
+router.group([authenticate(Admin)], (router) => {
 	// Admin User Routes
 	router.group("/admin-users", (router) => {
-		router.get("/", AdminController.getAdmins, advancedResults)
+		router.get("/", AdminController.getAdmins)
 		router.put(
 			"/:id/change-password",
 			adminValidation.changePassword,
@@ -86,17 +84,17 @@ router.group([authenticate(Admin), authorize], (router) => {
 			AdminController.createAdmin
 		)
 		router.delete("/:id", AdminController.deleteAdmin)
-
 	})
 
 	// Blog Routes
 	router.group("/blog", (router) => {
-		router.get("/", BlogController.getBlogs)
+		router.get("/", authChecker("Blog", "read"), BlogController.getBlogs)
 		router.post(
 			"/",
 			imgUploader("image"),
 			uploadToCloudinary,
 			blogValidation.create,
+			authChecker("Blog", "create"),
 			BlogController.createBlog
 		)
 		// router.get("/categories", BlogController.getCategories)
@@ -204,12 +202,12 @@ router.group([authenticate(Admin), authorize], (router) => {
 
 	//Contact Routes
 	router.group("/contact-us", (router) => {
-		router.get("/", ContactUsController.getContacts, advancedResults);
+		router.get("/", ContactUsController.getContacts, advancedResults)
 		router.put(
 			"/:id/change-status",
 			contactUsValidation.changeStatus,
 			ContactUsController.changeStatus
-		);
+		)
 
 		// router.get("/:id", ContactUsController.getContact);
 		// router.put("/:id", contactUsValidation.create, ContactUsController.updateContact);
@@ -217,13 +215,13 @@ router.group([authenticate(Admin), authorize], (router) => {
 	})
 
 	//Role Routes
-	router.group("/roles", (router) => {
-		router.get("/", RoleController.getRoles, advancedResults)
-		router.get("/:id", RoleController.getRole)
-		router.post("/", roleValidation.create, RoleController.createRole)
-		router.put("/:id", roleValidation.update, RoleController.updateRole)
-		router.delete("/:id", RoleController.deleteRole)
-	})
+	// router.group("/roles", (router) => {
+	// 	router.get("/", RoleController.getRoles, advancedResults)
+	// 	router.get("/:id", RoleController.getRole)
+	// 	router.post("/", roleValidation.create, RoleController.createRole)
+	// 	router.put("/:id", roleValidation.update, RoleController.updateRole)
+	// 	router.delete("/:id", RoleController.deleteRole)
+	// })
 
 	// Ticket Routes
 	router.group("/ticket", (router) => {
