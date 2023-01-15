@@ -1,6 +1,7 @@
 const allowedOrigins = [
 	"http://localhost:3000",
 	"http://localhost:3001",
+	"http://192.168.158.204:3000",
 	"http://localhost:3002",
 	"https://rahanet.netlify.app",
 	"https://rahanetisp.netlify.app"
