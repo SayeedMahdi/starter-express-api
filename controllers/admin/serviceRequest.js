@@ -9,20 +9,14 @@ const ServiceRequestController = {
      * @access  Private/Admin
      */
     getRequests: asyncHandler(async (req, res, next) => {
-        req.database = {
-            model: ServiceRequest,
-        };
+        const businessPackage = await ServiceRequest.find().populate('service', 'name')
 
-        if (req.query.hasOwnProperty("q") && req.query.q.length > 0) {
-            req.database.search = {
-                $or: [
-                    { fullName: { $regex: req.query["q"], $options: "i" } },
-                    { email: { $regex: req.query["q"], $options: "i" } },
-                ],
-            };
+        if (!businessPackage) {
+            res.status(404)
+            throw new Error(t("not-found", { ns: "validations", key: t("package") }))
         }
 
-        next();
+        res.json(businessPackage)
     }),
 
     /** 
@@ -35,14 +29,14 @@ const ServiceRequestController = {
             return next();
         }
 
-        const serviceRequest = await ServiceRequest.findOne({ _id: id }).accessibleBy(user.ability);
+        const businessPackage = await ServiceRequest.findOne({ _id: id }).populate('service', 'name')
 
-        if (!serviceRequest) {
+        if (!businessPackage) {
             res.status(400);
             throw new Error(t("not-found", { ns: 'validations', key: t('request') }));
         }
 
-        res.json(serviceRequest);
+        res.json(businessPackage);
     }),
 
     /** 
@@ -56,17 +50,17 @@ const ServiceRequestController = {
             return next();
         }
 
-        const serviceRequest = await ServiceRequest.findOneAndUpdate({ _id: id }, {
+        const businessPackage = await ServiceRequest.findOneAndUpdate({ _id: id }, {
             status: body.status,
             updaterId: user.id
-        }, { new: true });
+        }, { new: true }).populate('service', 'name')
 
-        if (!serviceRequest) {
+        if (!businessPackage) {
             res.status(400);
             throw new Error(t("not-found", { ns: 'validations', key: t('request') }));
         }
 
-        res.json(serviceRequest);
+        res.json(businessPackage);
     }),
 }
 
